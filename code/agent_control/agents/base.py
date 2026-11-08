@@ -14,6 +14,10 @@ def register_agent(cls: Type["Agent"]) -> Type["Agent"]:
     return cls
 
 
+def agent_types() -> Dict[str, Type["Agent"]]:
+    return dict(_AGENT_TYPES)
+
+
 def agent_from_dict(data: Dict[str, Any]) -> "Agent":
     try:
         cls = _AGENT_TYPES[data["type"]]
@@ -24,6 +28,7 @@ def agent_from_dict(data: Dict[str, Any]) -> "Agent":
 
 class Agent(ABC):
     TYPE = "abstract"
+    OPTIONS: tuple = ()
 
     def __init__(self, agent_id: str, name: str, capabilities: Iterable[str] = (),
                  capacity: int = 1) -> None:

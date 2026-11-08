@@ -1,0 +1,38 @@
+digraph G {
+  rankdir=BT; nodesep=0.45; ranksep=0.7;
+  node [shape=record, fontname="Arial", fontsize=10, style=filled, fillcolor="#FFFFFF"];
+  edge [fontname="Arial", fontsize=9];
+
+  AG [label="{«abstract»\nAgent|+ OPTIONS|+ execute(prompt)\l}"];
+  LA [label="{LocalModelAgent}"];
+  AA [label="{ApiModelAgent}"];
+  DA [label="{DummyAgent}"];
+  AF [label="{«factory»\nAgentFactory||+ create(kind, ...)\l+ option_prompts(kind)\l}"];
+  DP [label="{«interface»\nDispatchPolicy||+ select()\l}"];
+  FF [label="{FirstFitPolicy}"];
+  LL [label="{LeastLoadedPolicy}"];
+  SS [label="{«interface»\nSearchStrategy||+ matches(agent, query)\l}"];
+  S1 [label="{SearchByName}"];
+  S2 [label="{SearchByCapability}"];
+  S3 [label="{SearchByType}"];
+  OR [label="{«singleton»\nOrchestrator|- _instance\l|+ instance()\l+ search(query, strategy)\l+ find_agents()\l+ assign(), dispatch(), execute_task()\l}"];
+  FC [label="{«facade»\nControlFacade||+ run_task(description, skill)\l}"];
+  MN [label="{Menu||+ loop()\l}"];
+
+  LA -> AG [arrowhead=empty];
+  AA -> AG [arrowhead=empty];
+  DA -> AG [arrowhead=empty];
+  FF -> DP [arrowhead=empty];
+  LL -> DP [arrowhead=empty];
+  S1 -> SS [arrowhead=empty];
+  S2 -> SS [arrowhead=empty];
+  S3 -> SS [arrowhead=empty];
+  AF -> AG [arrowhead=vee, style=dashed, label="создаёт"];
+  OR -> AG [arrowhead=odiamond];
+  OR -> DP [arrowhead=vee];
+  OR -> SS [arrowhead=vee];
+  FC -> OR [arrowhead=vee];
+  MN -> FC [arrowhead=vee];
+  MN -> AF [arrowhead=vee];
+  MN -> OR [arrowhead=vee];
+}

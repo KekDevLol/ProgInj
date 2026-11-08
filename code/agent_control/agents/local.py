@@ -10,6 +10,7 @@ from .base import Agent, register_agent
 @register_agent
 class LocalModelAgent(Agent):
     TYPE = "local"
+    OPTIONS = (("model_path", "Путь к весам: ", ""), ("device", "Устройство (cpu/cuda): ", "cpu"))
 
     def __init__(self, agent_id: str, name: str, capabilities: Iterable[str] = (), capacity: int = 1,
                  model_path: str = "", device: str = "cpu") -> None:

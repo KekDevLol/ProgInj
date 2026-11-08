@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
@@ -10,10 +11,27 @@ from .exceptions import (AgentBusyError, AgentNotFoundError, CapabilityMismatchE
                          DuplicateIdError, InvalidTaskStateError, NoSuitableAgentError,
                          StorageError, TaskNotFoundError)
 from .policies import DispatchPolicy, LeastLoadedPolicy
+from .search import SearchByCapability, SearchByName, SearchByType, SearchStrategy
 from .task import AuditEvent, Task, TaskStatus
 
 
 class Orchestrator:
+    _instance: Optional["Orchestrator"] = None
+    _lock = threading.Lock()
+
+    @classmethod
+    def instance(cls) -> "Orchestrator":
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
+        return cls._instance
+
+    @classmethod
+    def reset_instance(cls) -> None:
+        with cls._lock:
+            cls._instance = None
+
     def __init__(self, policy: Optional[DispatchPolicy] = None) -> None:
         self._agents: Dict[str, Agent] = {}
         self._tasks: Dict[str, Task] = {}
@@ -70,11 +88,11 @@ class Orchestrator:
         return task
 
     def find_agents(self, query: str = "", capability: str = "", type_name: str = "") -> List[Agent]:
-        q = query.strip().lower()
-        return [a for a in self._agents.values()
-                if (not q or q in a.name.lower() or q in a.agent_id.lower())
-                and a.can_handle(capability)
-                and (not type_name or a.TYPE == type_name)]
+        filters = ((SearchByName(), query), (SearchByCapability(), capability), (SearchByType(), type_name))
+        return [a for a in self._agents.values() if all(s.matches(a, q) for s, q in filters)]
+
+    def search(self, query: str, strategy: SearchStrategy) -> List[Agent]:
+        return [a for a in self._agents.values() if strategy.matches(a, query)]
 
     def assign(self, task_id: str, agent_id: str) -> None:
         task = self.get_task(task_id)

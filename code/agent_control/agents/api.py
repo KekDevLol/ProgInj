@@ -10,6 +10,8 @@ from .base import Agent, register_agent
 @register_agent
 class ApiModelAgent(Agent):
     TYPE = "api"
+    OPTIONS = (("base_url", "Base URL: ", ""),
+               ("api_key_env", "Имя переменной окружения с ключом: ", ""))
 
     def __init__(self, agent_id: str, name: str, capabilities: Iterable[str] = (), capacity: int = 1,
                  base_url: str = "", api_key_env: str = "", timeout_s: float = 60.0) -> None:

@@ -1,0 +1,27 @@
+digraph G {
+  rankdir=BT; nodesep=0.5; ranksep=0.7;
+  node [shape=record, fontname="Arial", fontsize=10, style=filled, fillcolor="#FFFFFF"];
+  edge [fontname="Arial", fontsize=9];
+
+  AG [label="{«abstract»\nAgent||+ execute(prompt)\l}"];
+  LA [label="{LocalModelAgent}"];
+  AA [label="{ApiModelAgent}"];
+  DA [label="{DummyAgent}"];
+  DP [label="{«abstract»\nDispatchPolicy||+ select()\l}"];
+  FF [label="{FirstFitPolicy}"];
+  LL [label="{LeastLoadedPolicy}"];
+  OR [label="{Orchestrator||+ find_agents(query, skill, type)\l  (фильтры зашиты в метод)\l+ assign(), dispatch(), execute_task()\l}"];
+  MN [label="{Menu||+ _add_agent()\l  (if/elif по типу агента)\l}"];
+
+  LA -> AG [arrowhead=empty];
+  AA -> AG [arrowhead=empty];
+  DA -> AG [arrowhead=empty];
+  FF -> DP [arrowhead=empty];
+  LL -> DP [arrowhead=empty];
+  OR -> AG [arrowhead=odiamond];
+  OR -> DP [arrowhead=vee];
+  MN -> OR [arrowhead=vee];
+  MN -> LA [arrowhead=vee, style=dashed, color="#B00020", label="создаёт"];
+  MN -> AA [arrowhead=vee, style=dashed, color="#B00020"];
+  MN -> DA [arrowhead=vee, style=dashed, color="#B00020"];
+}

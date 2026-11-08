@@ -4,8 +4,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Callable
 
-from .agents import Agent, ApiModelAgent, DummyAgent, LocalModelAgent
+from .agents import AgentFactory
 from .exceptions import AgentControlError
+from .facade import ControlFacade
 from .orchestrator import Orchestrator
 from .policies import FirstFitPolicy, LeastLoadedPolicy
 
@@ -27,6 +28,7 @@ MENU = """
 12. Сменить политику распределения
 13. Сохранить в файл
 14. Загрузить из файла
+15. Выполнить задачу одним действием
 0. Выход
 """
 
@@ -42,7 +44,7 @@ class Menu:
             "1": self._add_agent, "2": self._add_task, "3": self._assign, "4": self._dispatch,
             "5": self._execute, "6": self._unassign, "7": self._search, "8": self._list_agents,
             "9": self._list_tasks, "10": self._audit, "11": self._report, "12": self._policy,
-            "13": self._save, "14": self._load,
+            "13": self._save, "14": self._load, "15": self._quick_run,
         }
 
     def loop(self) -> None:
@@ -77,18 +79,9 @@ class Menu:
         agent_id, name = self._ask("ID агента: "), self._ask("Название: ")
         caps = [c for c in self._ask("Навыки через запятую: ").split(",")]
         capacity = int(self._ask("Лимит одновременных задач (1): ") or 1)
-        agent: Agent
-        if kind == "local":
-            agent = LocalModelAgent(agent_id, name, caps, capacity,
-                                    self._ask("Путь к весам: "), self._ask("Устройство (cpu/cuda): ") or "cpu")
-        elif kind == "api":
-            agent = ApiModelAgent(agent_id, name, caps, capacity, self._ask("Base URL: "),
-                                  self._ask("Имя переменной окружения с ключом: "))
-        elif kind == "dummy":
-            agent = DummyAgent(agent_id, name, caps, capacity)
-        else:
-            raise ValueError(f"неизвестный тип {kind!r}")
-        self._orc.register_agent(agent)
+        options = {key: self._ask(prompt) or default
+                   for key, prompt, default in AgentFactory.option_prompts(kind)}
+        self._orc.register_agent(AgentFactory.create(kind, agent_id, name, caps, capacity, **options))
         self._out("Агент зарегистрирован.")
 
     def _add_task(self) -> None:
@@ -138,6 +131,11 @@ class Menu:
             raise ValueError(f"неизвестная политика {name!r}")
         self._orc.set_policy(policies[name]())
         self._out(f"Политика: {name}")
+
+    def _quick_run(self) -> None:
+        task = ControlFacade(self._orc).run_task(self._ask("Описание задачи: "),
+                                                 self._ask("Требуемый навык (пусто = любой): "))
+        self._out(f"{task.task_id} -> {task.agent_id}: {task.result}")
 
     def _save(self) -> None:
         self._orc.save(self._path)
