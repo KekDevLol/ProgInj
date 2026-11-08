@@ -1,8 +1,4 @@
-"""Политики распределения задач (паттерн «Стратегия»).
-
-Метод централизованного управления выделен в сменяемый объект: оркестратор отдаёт политике
-список подходящих агентов, а выбор делает она. Для диссертации здесь будут появляться
-новые политики (по стоимости, по качеству, по очереди и т.д.) без изменения оркестратора."""
+"""Политики выбора агента для задачи."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -21,7 +17,6 @@ class DispatchPolicy(ABC):
 
 
 class FirstFitPolicy(DispatchPolicy):
-    """Первый подходящий (порядок регистрации)."""
     name = "first-fit"
 
     def select(self, candidates: Sequence[Agent], task: Task) -> Agent:
@@ -29,7 +24,6 @@ class FirstFitPolicy(DispatchPolicy):
 
 
 class LeastLoadedPolicy(DispatchPolicy):
-    """Агент с наименьшей относительной загрузкой (балансировка нагрузки)."""
     name = "least-loaded"
 
     def select(self, candidates: Sequence[Agent], task: Task) -> Agent:

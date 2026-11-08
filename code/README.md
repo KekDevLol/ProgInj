@@ -14,7 +14,7 @@ code/
     orchestrator.py          # Orchestrator: центр управления (регистрация, назначение, выполнение, аудит, JSON)
     exceptions.py            # иерархия AgentControlError
     cli.py                   # Menu
-  tests/test_orchestrator.py # unittest
+  tests/                   # pytest: тесты агентов, задач, политик, оркестратора, хранения и меню
 ```
 
-Запуск: `python main.py`; тесты: `python -m unittest discover tests`.
+Запуск: `python main.py`; тесты: `pip install -r requirements-dev.txt`, затем `python -m pytest` (покрытие: `python -m pytest --cov=agent_control --cov-branch`).

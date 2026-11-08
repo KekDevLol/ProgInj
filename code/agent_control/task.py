@@ -1,4 +1,4 @@
-"""Задача (аналог Reader в лабораторной: «получатель» агента) и события аудита."""
+"""Задача и запись журнала аудита."""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
@@ -10,14 +10,14 @@ from .exceptions import InvalidTaskStateError
 
 
 class TaskStatus(str, Enum):
-    PENDING = "pending"      # создана, агент не назначен
-    ASSIGNED = "assigned"    # назначена агенту
-    DONE = "done"            # выполнена
+    PENDING = "pending"
+    ASSIGNED = "assigned"
+    DONE = "done"
 
 
 class Task:
     def __init__(self, task_id: str, description: str, capability: str = "") -> None:
-        if not task_id or not description:
+        if not task_id.strip() or not description.strip():
             raise ValueError("task_id и description обязательны")
         self._task_id = task_id
         self._description = description
@@ -50,7 +50,6 @@ class Task:
     def result(self) -> Optional[str]:
         return self._result
 
-    # Переходы состояний: единственное место, где меняется статус.
     def assign(self, agent_id: str) -> None:
         if self._status is not TaskStatus.PENDING:
             raise InvalidTaskStateError(f"Задача {self._task_id} уже имеет статус {self._status.value}")
@@ -86,7 +85,6 @@ class Task:
 
 @dataclass(frozen=True)
 class AuditEvent:
-    """Запись журнала центрального управления: кто, что и когда сделал."""
     event: str
     details: str
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat(timespec="seconds"))
