@@ -1,0 +1,28 @@
+digraph G {
+  rankdir=BT; nodesep=0.45; ranksep=0.7;
+  node [shape=record, fontname="Arial", fontsize=10, style=filled, fillcolor="#FFFFFF"];
+  edge [fontname="Arial", fontsize=9];
+
+  AG [label="{«abstract»\nAgent|- _agent_id: str\l- _name: str\l- _capabilities: frozenset\l- _capacity: int\l- _active: list of str\l- _runner: Runner\l|+ can_handle(capability): bool\l+ assign_task(), finish_task()\l+ attach_runner(runner)\l+ get_type(): str  «abstract»\l+ display(): str  «abstract»\l+ execute(prompt): str  «abstract»\l}"];
+  LA [label="{LocalModelAgent|- _model_path: str\l- _device: str\l|+ execute(prompt): str\l}"];
+  AA [label="{ApiModelAgent|- _base_url: str\l- _api_key_env: str\l- _timeout_s: float\l|+ execute(prompt): str\l}"];
+  DA [label="{DummyAgent||+ execute(prompt): str\l}"];
+  TK [label="{Task|- _task_id: str\l- _description: str\l- _capability: str\l- _status: TaskStatus\l- _agent_id: str\l- _result: str\l|+ assign(), unassign()\l+ complete(result)\l}"];
+  AE [label="{«dataclass»\nAuditEvent|+ event, details\l+ timestamp\l|}"];
+  DP [label="{«abstract»\nDispatchPolicy||+ select(candidates, task): Agent  «abstract»\l}"];
+  FF [label="{FirstFitPolicy||+ select()\l}"];
+  LL [label="{LeastLoadedPolicy||+ select()\l}"];
+  OR [label="{Orchestrator|- _agents: dict\l- _tasks: dict\l- _audit: list\l- _policy: DispatchPolicy\l|+ register_agent(), create_task()\l+ find_agents(query, skill, type)\l+ assign(), unassign()\l+ dispatch(task_id)\l+ execute_task(task_id)\l+ report(), save(), load()\l}"];
+  MN [label="{Menu||+ loop()\l}"];
+
+  LA -> AG [arrowhead=empty];
+  AA -> AG [arrowhead=empty];
+  DA -> AG [arrowhead=empty];
+  FF -> DP [arrowhead=empty];
+  LL -> DP [arrowhead=empty];
+  OR -> AG [arrowhead=odiamond, headlabel="0..*", labeldistance=2];
+  OR -> TK [arrowhead=odiamond, headlabel="0..*", labeldistance=2];
+  OR -> AE [arrowhead=diamond, headlabel="0..*", labeldistance=2];
+  OR -> DP [arrowhead=vee, label=" использует"];
+  MN -> OR [arrowhead=vee];
+}
