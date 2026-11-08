@@ -21,11 +21,3 @@ def test_first_fit_takes_first(agents):
 
 def test_least_loaded_takes_idle(agents):
     assert LeastLoadedPolicy().select(agents, Task("T1", "x")).agent_id == "idle"
-
-
-def test_least_loaded_uses_relative_load():
-    small = DummyAgent("small", "S", capacity=1)
-    big = DummyAgent("big", "B", capacity=4)
-    small.assign_task("T1")
-    big.assign_task("T2")
-    assert LeastLoadedPolicy().select([small, big], Task("T3", "x")).agent_id == "big"

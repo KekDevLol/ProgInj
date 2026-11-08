@@ -17,4 +17,4 @@ code/
   tests/                   # pytest: тесты агентов, задач, политик, оркестратора, хранения и меню
 ```
 
-Запуск: `python main.py`; тесты: `pip install -r requirements-dev.txt`, затем `python -m pytest` (покрытие: `python -m pytest --cov=agent_control --cov-branch`).
+Запуск: `python main.py`; тесты: `pip install -r requirements-dev.txt`, затем `python -m pytest`.
