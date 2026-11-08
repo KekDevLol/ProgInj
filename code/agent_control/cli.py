@@ -1,4 +1,4 @@
-"""Консольное меню. Ввод/вывод внедряются через конструктор — меню тестируется скриптованным вводом."""
+"""Консольное меню."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -58,9 +58,9 @@ class Menu:
                 continue
             try:
                 action()
-            except AgentControlError as exc:     # ожидаемые ошибки предметной области
+            except AgentControlError as exc:
                 self._out(f"Ошибка: {exc}")
-            except ValueError as exc:            # некорректный ввод
+            except ValueError as exc:
                 self._out(f"Некорректные данные: {exc}")
 
     def _ask(self, label: str) -> str:

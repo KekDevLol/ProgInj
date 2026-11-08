@@ -1,21 +1,15 @@
-"""Абстрактный класс Agent (аналог Publication из лабораторной работы).
-
-Агент — исполнитель задач. Как именно он работает (локальная модель, облачный API,
-скриптовая заглушка), скрыто в наследниках; оркестратор видит только этот интерфейс.
-"""
+"""Базовый класс агента."""
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, FrozenSet, Iterable, List, Optional, Type
 
-# Подключаемая реализация: принимает текст задачи, возвращает результат.
 Runner = Callable[[str], str]
 
 _AGENT_TYPES: Dict[str, Type["Agent"]] = {}
 
 
 def register_agent(cls: Type["Agent"]) -> Type["Agent"]:
-    """Декоратор: регистрирует подкласс по TYPE (нужен для загрузки из файла)."""
     _AGENT_TYPES[cls.TYPE] = cls
     return cls
 
@@ -37,15 +31,13 @@ class Agent(ABC):
             raise ValueError("agent_id и name обязательны")
         if capacity < 1:
             raise ValueError("capacity должна быть >= 1")
-        # Инкапсуляция: все поля закрыты.
         self._agent_id = agent_id
         self._name = name
         self._capabilities: FrozenSet[str] = frozenset(c.strip().lower() for c in capabilities if c.strip())
         self._capacity = capacity
-        self._active: List[str] = []                 # id задач, выполняемых сейчас
-        self._runner: Optional[Runner] = None        # точка подключения реального движка
+        self._active: List[str] = []
+        self._runner: Optional[Runner] = None
 
-    # --- свойства -------------------------------------------------------
     @property
     def agent_id(self) -> str:
         return self._agent_id
@@ -64,7 +56,7 @@ class Agent(ABC):
 
     @property
     def active_tasks(self) -> List[str]:
-        return list(self._active)                    # копия, а не внутренний список
+        return list(self._active)
 
     @property
     def load(self) -> int:
@@ -82,17 +74,14 @@ class Agent(ABC):
         return not capability or capability.strip().lower() in self._capabilities
 
     def attach_runner(self, runner: Runner) -> None:
-        """Подключает реальную реализацию (локальную модель или API) без изменения кода системы."""
         self._runner = runner
 
-    # --- учёт загрузки (вызывается оркестратором) -----------------------
     def assign_task(self, task_id: str) -> None:
         self._active.append(task_id)
 
     def finish_task(self, task_id: str) -> None:
         self._active.remove(task_id)
 
-    # --- «чисто виртуальные» методы -------------------------------------
     @abstractmethod
     def get_type(self) -> str:
         """Человекочитаемый тип агента."""
@@ -114,7 +103,6 @@ class Agent(ABC):
     def from_dict(cls, data: Dict[str, Any]) -> "Agent":
         """Восстановление из словаря."""
 
-    # --- общее ----------------------------------------------------------
     def _summary(self) -> str:
         return (f"[{self._agent_id}] {self._name} | {self.get_type()} | "
                 f"навыки: {', '.join(sorted(self._capabilities)) or '-'} | "

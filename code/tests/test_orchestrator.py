@@ -128,7 +128,7 @@ class Execution(unittest.TestCase):
             o.assign(t.task_id, aid)
             with self.assertRaises(AgentNotConnectedError):
                 o.execute_task(t.task_id)
-            self.assertEqual(t.status, TaskStatus.ASSIGNED)   # задача не потеряна
+            self.assertEqual(t.status, TaskStatus.ASSIGNED)
 
     def test_attach_runner_later(self):
         o = make()
@@ -169,9 +169,9 @@ class Storage(unittest.TestCase):
             o.save(p)
             loaded = Orchestrator.load(p)
         self.assertEqual([a.agent_id for a in loaded.agents], [a.agent_id for a in o.agents])
-        self.assertEqual(loaded.get_agent("d1").load, 1)          # загрузка восстановлена из задач
+        self.assertEqual(loaded.get_agent("d1").load, 1)
         self.assertEqual(loaded.get_task("T1").status, TaskStatus.ASSIGNED)
-        self.assertEqual(loaded.create_task("y").task_id, "T2")   # счётчик продолжился
+        self.assertEqual(loaded.create_task("y").task_id, "T2")
         self.assertIsInstance(loaded.get_agent("l1"), LocalModelAgent)
 
     def test_load_missing(self):

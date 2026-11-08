@@ -1,8 +1,4 @@
-"""Orchestrator (аналог Library): единая точка управления агентами и задачами.
-
-Все операции — регистрация, назначение, выполнение, возврат — проходят через него,
-и каждая фиксируется в журнале аудита. Агенты не знают друг о друге и не принимают задачи
-в обход оркестратора."""
+"""Центр управления: все действия с агентами и задачами идут через него."""
 from __future__ import annotations
 
 import json
@@ -24,7 +20,6 @@ class Orchestrator:
         self._policy: DispatchPolicy = policy or LeastLoadedPolicy()
         self._task_counter = 0
 
-    # --- политика -------------------------------------------------------
     @property
     def policy(self) -> DispatchPolicy:
         return self._policy
@@ -33,7 +28,6 @@ class Orchestrator:
         self._policy = policy
         self._log("policy", f"установлена политика {policy.name}")
 
-    # --- доступ ---------------------------------------------------------
     def get_agent(self, agent_id: str) -> Agent:
         try:
             return self._agents[agent_id]
@@ -61,7 +55,6 @@ class Orchestrator:
     def _log(self, event: str, details: str) -> None:
         self._audit.append(AuditEvent(event, details))
 
-    # --- регистрация ----------------------------------------------------
     def register_agent(self, agent: Agent) -> None:
         if agent.agent_id in self._agents:
             raise DuplicateIdError(f"Агент {agent.agent_id} уже зарегистрирован")
@@ -75,22 +68,18 @@ class Orchestrator:
         self._log("create", f"{task.task_id}: {description}")
         return task
 
-    # --- поиск ----------------------------------------------------------
     def find_agents(self, query: str = "", capability: str = "", type_name: str = "") -> List[Agent]:
-        """Поиск по части названия/id, навыку и типу (local/api/dummy); регистр не важен."""
         q = query.strip().lower()
         return [a for a in self._agents.values()
                 if (not q or q in a.name.lower() or q in a.agent_id.lower())
                 and a.can_handle(capability)
                 and (not type_name or a.TYPE == type_name)]
 
-    # --- назначение / возврат -------------------------------------------
     def assign(self, task_id: str, agent_id: str) -> None:
-        """Ручное назначение (аналог «выдать издание»)."""
         task = self.get_task(task_id)
         agent = self.get_agent(agent_id)
         if task.status is not TaskStatus.PENDING:
-            task.assign(agent_id)               # бросит InvalidTaskStateError с пояснением
+            task.assign(agent_id)
         if not agent.can_handle(task.capability):
             raise CapabilityMismatchError(
                 f"Агент {agent_id} не обладает навыком {task.capability!r}")
@@ -101,19 +90,17 @@ class Orchestrator:
         self._log("assign", f"{task_id} -> {agent_id}")
 
     def dispatch(self, task_id: str) -> Agent:
-        """Автоматическое назначение через политику распределения."""
         task = self.get_task(task_id)
         candidates = [a for a in self._agents.values()
                       if a.can_handle(task.capability) and a.has_capacity]
         if not candidates:
             raise NoSuitableAgentError(f"Для задачи {task_id} нет свободного агента с навыком "
                                        f"{task.capability or 'любой'!r}")
-        agent = self._policy.select(candidates, task)   # полиморфный вызов стратегии
+        agent = self._policy.select(candidates, task)
         self.assign(task_id, agent.agent_id)
         return agent
 
     def unassign(self, task_id: str) -> None:
-        """Возврат задачи в очередь (аналог «вернуть издание»)."""
         task = self.get_task(task_id)
         agent_id = task.agent_id
         task.unassign()
@@ -121,14 +108,13 @@ class Orchestrator:
             self.get_agent(agent_id).finish_task(task_id)
         self._log("unassign", f"{task_id} <- {agent_id}")
 
-    # --- выполнение -----------------------------------------------------
     def execute_task(self, task_id: str) -> Task:
         task = self.get_task(task_id)
         if task.status is not TaskStatus.ASSIGNED:
-            task.complete("")                   # бросит InvalidTaskStateError
+            task.complete("")
         agent = self.get_agent(task.agent_id)   # type: ignore[arg-type]
         try:
-            result = agent.execute(task.description)   # полиморфный вызов: тип агента неизвестен
+            result = agent.execute(task.description)
         except Exception as exc:
             self._log("execute_failed", f"{task_id} @ {agent.agent_id}: {exc}")
             raise
@@ -137,7 +123,6 @@ class Orchestrator:
         self._log("execute", f"{task_id} @ {agent.agent_id} -> готово")
         return task
 
-    # --- отчёт ----------------------------------------------------------
     def report(self) -> str:
         by_status = {s: sum(1 for t in self._tasks.values() if t.status is s) for s in TaskStatus}
         lines = [f"Политика: {self._policy.name}",
@@ -148,7 +133,6 @@ class Orchestrator:
         lines += ["", "Задачи:"] + [f"  {t.display()}" for t in self._tasks.values()]
         return "\n".join(lines)
 
-    # --- хранение -------------------------------------------------------
     def save(self, path: Union[str, Path]) -> None:
         data = {"policy": self._policy.name, "task_counter": self._task_counter,
                 "agents": [a.to_dict() for a in self._agents.values()],
@@ -172,7 +156,7 @@ class Orchestrator:
                 task = Task.from_dict(t)
                 orch._tasks[task.task_id] = task
                 if task.status is TaskStatus.ASSIGNED and task.agent_id in orch._agents:
-                    orch._agents[task.agent_id].assign_task(task.task_id)   # загрузка агента восстанавливается из задач
+                    orch._agents[task.agent_id].assign_task(task.task_id)
             orch._audit = [AuditEvent(**e) for e in data.get("audit", [])]
             orch._task_counter = int(data.get("task_counter", len(orch._tasks)))
             return orch
